@@ -4,7 +4,7 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 5.0"
+      version = ">= 5.41"
     }
   }
 }
@@ -26,6 +26,13 @@ module "project" {
     "compute.googleapis.com",
     "storage.googleapis.com",
   ]
+
+  # Strip roles/editor from the Compute Engine default service account.
+  default_service_account_action = "DEPRIVILEGE"
+
+  # PREVENT (the default) makes `terraform destroy` fail on purpose. Set this to
+  # DELETE only when you really mean to delete the project and everything in it.
+  deletion_policy = "PREVENT"
 }
 
 variable "project_id" {
