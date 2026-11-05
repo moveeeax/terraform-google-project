@@ -8,7 +8,7 @@ folder, associates a billing account and enables a set of APIs.
 
 ```hcl
 module "project" {
-  source = "github.com/moveeeax/terraform-google-project"
+  source = "github.com/moveeeax/terraform-google-project?ref=v1.0.0"
 
   project_id      = "my-app-prod-1234"
   name            = "My App Prod"
