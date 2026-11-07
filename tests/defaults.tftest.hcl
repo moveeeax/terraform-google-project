@@ -24,6 +24,16 @@ run "defaults_are_safe" {
     condition     = length(google_project_default_service_accounts.this) == 0
     error_message = "The default service accounts must be left untouched unless default_service_account_action is set."
   }
+
+  assert {
+    condition     = length(google_resource_manager_lien.this) == 0
+    error_message = "No lien must be created unless lien is set."
+  }
+
+  assert {
+    condition     = output.lien_name == null
+    error_message = "lien_name must be null when no lien is configured."
+  }
 }
 
 run "apis_are_enabled_without_being_disabled_on_destroy" {
@@ -106,4 +116,78 @@ run "rejects_invalid_default_service_account_action" {
   }
 
   expect_failures = [var.default_service_account_action]
+}
+
+run "lien_blocks_project_deletion" {
+  variables {
+    lien = {
+      reason = "Production project. Remove the lien before deleting."
+    }
+  }
+
+  assert {
+    condition     = one(google_resource_manager_lien.this).restrictions == tolist(["resourcemanager.projects.delete"])
+    error_message = "The lien must restrict resourcemanager.projects.delete."
+  }
+
+  assert {
+    condition     = one(google_resource_manager_lien.this).parent == "projects/${google_project.this.number}"
+    error_message = "The lien must be attached to the project by number (projects/<number>)."
+  }
+
+  assert {
+    condition     = one(google_resource_manager_lien.this).origin == "terraform"
+    error_message = "lien.origin must default to \"terraform\"."
+  }
+
+  assert {
+    condition     = one(google_resource_manager_lien.this).reason == "Production project. Remove the lien before deleting."
+    error_message = "lien.reason must be passed through unchanged."
+  }
+
+  assert {
+    condition     = output.lien_name == one(google_resource_manager_lien.this).name
+    error_message = "lien_name must expose the lien's name."
+  }
+}
+
+run "lien_origin_can_be_overridden" {
+  variables {
+    lien = {
+      reason = "Production project."
+      origin = "platform-team"
+    }
+  }
+
+  assert {
+    condition     = one(google_resource_manager_lien.this).origin == "platform-team"
+    error_message = "An explicit lien.origin must be passed through."
+  }
+}
+
+run "rejects_empty_lien_reason" {
+  # Variable validation fires during plan; expected failures must be planned, not applied.
+  command = plan
+
+  variables {
+    lien = {
+      reason = " "
+    }
+  }
+
+  expect_failures = [var.lien]
+}
+
+run "rejects_lien_origin_over_200_characters" {
+  # Variable validation fires during plan; expected failures must be planned, not applied.
+  command = plan
+
+  variables {
+    lien = {
+      reason = "Production project."
+      origin = join("", [for i in range(201) : "x"])
+    }
+  }
+
+  expect_failures = [var.lien]
 }

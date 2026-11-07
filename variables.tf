@@ -81,6 +81,30 @@ variable "default_service_account_action" {
   }
 }
 
+variable "lien" {
+  description = <<-EOT
+    Optional lien that blocks deletion of the project through any interface
+    (resourcemanager.projects.delete), not just through Terraform. reason is shown
+    to whoever tries to delete the project; origin identifies who placed the lien.
+    Both are limited to 200 characters. null (the default) creates no lien.
+  EOT
+  type = object({
+    reason = string
+    origin = optional(string, "terraform")
+  })
+  default = null
+
+  validation {
+    condition     = var.lien == null || try(length(trimspace(var.lien.reason)) > 0 && length(var.lien.reason) <= 200, false)
+    error_message = "lien.reason must be a non-empty string of at most 200 characters."
+  }
+
+  validation {
+    condition     = var.lien == null || try(length(trimspace(var.lien.origin)) > 0 && length(var.lien.origin) <= 200, false)
+    error_message = "lien.origin must be a non-empty string of at most 200 characters."
+  }
+}
+
 variable "labels" {
   description = "Labels applied to the project."
   type        = map(string)
