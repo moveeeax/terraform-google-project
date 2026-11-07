@@ -30,3 +30,15 @@ resource "google_project_default_service_accounts" "this" {
   # The default service accounts only exist once their parent APIs are on.
   depends_on = [google_project_service.this]
 }
+
+# deletion_policy only stops Terraform. A lien is enforced by Resource Manager,
+# so it also blocks a project delete from the console, gcloud or the API until
+# the lien itself is removed.
+resource "google_resource_manager_lien" "this" {
+  count = var.lien == null ? 0 : 1
+
+  parent       = "projects/${google_project.this.number}"
+  restrictions = ["resourcemanager.projects.delete"]
+  origin       = var.lien.origin
+  reason       = var.lien.reason
+}

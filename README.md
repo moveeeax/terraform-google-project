@@ -35,6 +35,13 @@ A runnable example lives in [`examples/basic`](examples/basic).
   the project. To actually tear one down, set `deletion_policy = "DELETE"` (or
   `"ABANDON"` to drop it from state and leave the project alive), apply that
   change, then destroy.
+* **No lien unless you ask for one.** `deletion_policy` only stops Terraform; a
+  delete from the console, `gcloud` or the API still succeeds. Set `lien` to
+  place a `google_resource_manager_lien` with
+  `restrictions = ["resourcemanager.projects.delete"]` on the project, and that
+  delete fails until the lien is removed. `origin` defaults to `"terraform"`.
+  Removing `lien` (or running `terraform destroy`) deletes the lien first, so a
+  later project delete is no longer blocked by it.
 * **`disable_on_destroy = false` on every enabled API.** Dropping an entry from
   `activate_apis` removes the Terraform resource but leaves the API switched on,
   so unrelated workloads in the project keep running.
@@ -66,6 +73,7 @@ floor is not `5.0`.
 | `deletion_policy`                | `PREVENT`, `ABANDON` or `DELETE`.                                                                        | `string`       | `"PREVENT"` |    no    |
 | `activate_apis`                  | APIs to enable, as full service names ending in `.googleapis.com`.                                       | `list(string)` | `[]`        |    no    |
 | `default_service_account_action` | `DEPRIVILEGE`, `DISABLE` or `DELETE` for the default service accounts. `null` leaves them alone.         | `string`       | `null`      |    no    |
+| `lien`                           | `{ reason, origin = "terraform" }` lien blocking project deletion through any interface. `null` for none. | `object`       | `null`      |    no    |
 | `labels`                         | Labels applied to the project.                                                                           | `map(string)`  | `{}`        |    no    |
 
 ## Outputs
@@ -76,6 +84,7 @@ floor is not `5.0`.
 | `project_id`   | Id of the project.                |
 | `number`       | Numeric identifier of the project.|
 | `enabled_apis` | APIs enabled on the project.      |
+| `lien_name`    | Name of the project lien, or `null` when none is configured. |
 
 ## Testing
 

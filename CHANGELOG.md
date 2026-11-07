@@ -6,6 +6,14 @@ All notable changes to this module are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `lien` input: optional `google_resource_manager_lien` restricting
+  `resourcemanager.projects.delete`, so the project cannot be deleted from the
+  console, `gcloud` or the API while the lien exists. `origin` defaults to
+  `"terraform"`. Null by default, so existing plans do not change.
+- `lien_name` output.
+
 ### Changed
 
 - CI: bump actions to their current majors, pin tool versions, and restrict the

@@ -17,3 +17,8 @@ output "enabled_apis" {
   description = "APIs enabled on the project."
   value       = [for s in google_project_service.this : s.service]
 }
+
+output "lien_name" {
+  description = "System-generated name of the project lien, or null when no lien is configured."
+  value       = one(google_resource_manager_lien.this[*].name)
+}
